@@ -4,5 +4,5 @@ import dev.prateekthakur.netlytix.domain.models.NetworkConnectionInfo
 import kotlinx.coroutines.flow.Flow
 
 interface NetworkConnectionRepository {
-    fun getInfo() : Flow<NetworkConnectionInfo?>
+    fun getInfo() : Flow<NetworkConnectionInfo>
 }

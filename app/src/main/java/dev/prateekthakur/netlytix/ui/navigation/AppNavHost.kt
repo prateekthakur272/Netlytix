@@ -6,6 +6,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import dev.prateekthakur.netlytix.ui.features.networkInfo.screens.NetworkDetailsScreen
 
 @Composable
 @androidx.annotation.RequiresPermission(android.Manifest.permission.ACCESS_NETWORK_STATE)
@@ -13,7 +14,7 @@ fun AppNavHost(controller: NavHostController = rememberNavController()) {
     CompositionLocalProvider(LocalNavHostController provides controller) {
         NavHost(navController = controller, startDestination = AppRoutes.Home.routeTemplate){
             composable(AppRoutes.Home.routeTemplate) {
-
+                NetworkDetailsScreen()
             }
         }
     }

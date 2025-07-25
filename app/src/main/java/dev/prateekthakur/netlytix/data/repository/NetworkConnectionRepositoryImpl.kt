@@ -16,7 +16,7 @@ class NetworkConnectionRepositoryImpl(context: Context) : NetworkConnectionRepos
 
     private val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
 
-    override fun getInfo(): Flow<NetworkConnectionInfo?> = callbackFlow {
+    override fun getInfo(): Flow<NetworkConnectionInfo> = callbackFlow {
         val networkCallback = object : ConnectivityManager.NetworkCallback() {
             override fun onCapabilitiesChanged(network: Network, networkCapabilities: NetworkCapabilities) {
                 super.onCapabilitiesChanged(network, networkCapabilities)
