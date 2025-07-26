@@ -1,5 +1,7 @@
 package dev.prateekthakur.netlytix.ui.features.networkInfo.screens
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -7,6 +9,7 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,6 +19,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Card
@@ -30,13 +35,13 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import dev.prateekthakur.netlytix.R
 import dev.prateekthakur.netlytix.domain.enums.NetworkConnectionType
-import dev.prateekthakur.netlytix.domain.models.NetworkConnectionInfo
-import dev.prateekthakur.netlytix.domain.models.WifiConnectionInfo
+import dev.prateekthakur.netlytix.ui.features.networkInfo.viewmodels.MobileNetworkInfoViewModel
 import dev.prateekthakur.netlytix.ui.features.networkInfo.viewmodels.NetworkInfoViewModel
 import dev.prateekthakur.netlytix.ui.features.networkInfo.viewmodels.WifiConnectionInfoViewModel
 import org.koin.androidx.compose.koinViewModel
@@ -45,23 +50,34 @@ import org.koin.androidx.compose.koinViewModel
 fun NetworkDetailsScreen(
     modifier: Modifier = Modifier,
     networkInfoViewModel: NetworkInfoViewModel = koinViewModel(),
-    wifiConnectionInfoViewModel: WifiConnectionInfoViewModel = koinViewModel()
 ) {
-    val network by networkInfoViewModel.state.collectAsState()
-    val wifi by wifiConnectionInfoViewModel.state.collectAsState()
-
+    val scrollState = rememberScrollState()
     Scaffold() { safeArea ->
         Column(
             modifier = modifier
                 .padding(safeArea)
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(16.dp)
+                .verticalScroll(state = scrollState),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            BasicNetworkDetailsView(network)
+            BasicNetworkDetailsView(networkInfoViewModel)
             NetworkTestButton()
-            WifiNetworkInfoView(wifi)
+            WifiNetworkInfoView()
+            MobileConnectionInfoView()
         }
+    }
+}
+
+@Composable
+fun InfoRow(title: String, value: String, modifier: Modifier = Modifier) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+        modifier = modifier.fillMaxWidth()
+    ) {
+        Text(title, style = MaterialTheme.typography.labelLarge)
+        Text(value, style = MaterialTheme.typography.labelLarge.copy(Color.Gray))
     }
 }
 
@@ -82,8 +98,12 @@ fun NetworkTestButton(modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun BasicNetworkDetailsView(info: NetworkConnectionInfo, modifier: Modifier = Modifier) {
+fun BasicNetworkDetailsView(
+    networkInfoViewModel: NetworkInfoViewModel,
+    modifier: Modifier = Modifier
+) {
 
+    val info by networkInfoViewModel.state.collectAsState()
     val isConnected = info.type != NetworkConnectionType.NONE
 
     Card {
@@ -127,26 +147,20 @@ fun BasicNetworkDetailsView(info: NetworkConnectionInfo, modifier: Modifier = Mo
             Text(info.type.name, style = MaterialTheme.typography.titleLarge)
             HorizontalDivider(modifier = modifier.padding(vertical = 8.dp))
 
-            Row {
-                Text(
-                    "Internet : ${if (!info.internetAccessible) "Disconnected" else "Connected"}",
-                    style = MaterialTheme.typography.labelLarge
-                )
-            }
-            Text(
-                "VPN : ${if (!info.vpnConnected) "Not connected" else "Connected"}",
-                style = MaterialTheme.typography.labelLarge
-            )
-            Text(
-                "Gateway: ${info.dnsServer.joinToString { "$it " }}",
-                style = MaterialTheme.typography.labelLarge
-            )
+            InfoRow("Internet", if (!info.internetAccessible) "Disconnected" else "Connected")
+            InfoRow("VPN", if (!info.vpnConnected) "Disconnected" else "Connected")
+            InfoRow("Gateway", info.dnsServer.joinToString { "$it " })
+
         }
     }
 }
 
 @Composable
-fun WifiNetworkInfoView(info: WifiConnectionInfo, modifier: Modifier = Modifier) {
+fun WifiNetworkInfoView(
+    modifier: Modifier = Modifier,
+    wifiConnectionInfoViewModel: WifiConnectionInfoViewModel = koinViewModel()
+) {
+    val info by wifiConnectionInfoViewModel.state.collectAsState()
     Card {
         Column(
             modifier = modifier
@@ -166,21 +180,40 @@ fun WifiNetworkInfoView(info: WifiConnectionInfo, modifier: Modifier = Modifier)
 
             Spacer(modifier = modifier.height(12.dp))
 
-            Text("SSID : ${info.ssid}", style = MaterialTheme.typography.labelLarge)
-            Text("BSSID : ${info.bssid}", style = MaterialTheme.typography.labelLarge)
-            Text(
-                "Strength : ${info.signalStrength} dbm",
-                style = MaterialTheme.typography.labelLarge
-            )
-            Text("Hidden : ${info.isSSidHidden}", style = MaterialTheme.typography.labelLarge)
-            Text("Network id : ${info.networkId}", style = MaterialTheme.typography.labelLarge)
-            Text("Frequency : ${info.frequency} hz", style = MaterialTheme.typography.labelLarge)
-            Text("Link speed : ${info.linkSpeed} mbps", style = MaterialTheme.typography.labelLarge)
-            Text("Gateway : ${info.gatewayAddress}", style = MaterialTheme.typography.labelLarge)
-            Text(
-                "Supplicant state : ${info.supplicantState}",
-                style = MaterialTheme.typography.labelLarge
-            )
+            InfoRow("SSID", info.ssid ?: "Unknown")
+            InfoRow("BSSID", info.bssid ?: "Unknown")
+            InfoRow("Strength", "${info.signalStrength} dBm")
+            InfoRow("Hidden", info.isSSidHidden.toString())
+            InfoRow("Network ID", info.networkId.toString())
+            InfoRow("Frequency", "${info.frequency} Hz")
+            InfoRow("Link Speed", "${info.linkSpeed} Mbps")
+            InfoRow("Gateway", info.gatewayAddress ?: "Unknown")
+            InfoRow("Supplicant State", info.supplicantState?.name ?: "Unknown")
+        }
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.P)
+@Composable
+fun MobileConnectionInfoView(
+    modifier: Modifier = Modifier,
+    mobileNetworkInfoViewModel: MobileNetworkInfoViewModel = koinViewModel()
+) {
+    val info by mobileNetworkInfoViewModel.state.collectAsState()
+
+    Card {
+        Column(
+            modifier = modifier
+                .padding(16.dp)
+                .fillMaxWidth()
+        ) {
+            Text("Mobile Network Details", style = MaterialTheme.typography.titleMedium)
+            Spacer(modifier = modifier.height(16.dp))
+            info?.let { info ->
+                InfoRow("Signal Strength", info.signalStrength?.level?.toString()?:"")
+                InfoRow("Sim Operator", "${info.simOperatorName} ${info.simOperator}")
+                InfoRow("Network Operator", "${info.networkOperatorName} ${info.networkOperator}")
+            }
         }
     }
 }

@@ -1,5 +1,6 @@
 package dev.prateekthakur.netlytix.injection
 
+import dev.prateekthakur.netlytix.ui.features.networkInfo.viewmodels.MobileNetworkInfoViewModel
 import dev.prateekthakur.netlytix.ui.features.networkInfo.viewmodels.NetworkInfoViewModel
 import dev.prateekthakur.netlytix.ui.features.networkInfo.viewmodels.WifiConnectionInfoViewModel
 import org.koin.androidx.viewmodel.dsl.viewModel
@@ -12,5 +13,9 @@ val ViewModelModule = module{
 
     viewModel {
         WifiConnectionInfoViewModel(get())
+    }
+
+    viewModel {
+        MobileNetworkInfoViewModel(get())
     }
 }
