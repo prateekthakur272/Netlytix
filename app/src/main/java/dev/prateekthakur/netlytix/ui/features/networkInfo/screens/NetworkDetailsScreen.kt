@@ -1,7 +1,15 @@
 package dev.prateekthakur.netlytix.ui.features.networkInfo.screens
 
+import android.Manifest
 import android.os.Build
+import android.telephony.CellInfo
+import android.telephony.CellInfoCdma
+import android.telephony.CellInfoGsm
+import android.telephony.CellInfoLte
+import android.telephony.CellInfoNr
+import android.telephony.CellInfoWcdma
 import androidx.annotation.RequiresApi
+import androidx.annotation.RequiresPermission
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -46,6 +54,8 @@ import dev.prateekthakur.netlytix.ui.features.networkInfo.viewmodels.NetworkInfo
 import dev.prateekthakur.netlytix.ui.features.networkInfo.viewmodels.WifiConnectionInfoViewModel
 import org.koin.androidx.compose.koinViewModel
 
+@RequiresApi(Build.VERSION_CODES.R)
+@RequiresPermission("android.permission.READ_PRIVILEGED_PHONE_STATE")
 @Composable
 fun NetworkDetailsScreen(
     modifier: Modifier = Modifier,
@@ -193,7 +203,8 @@ fun WifiNetworkInfoView(
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.P)
+@RequiresPermission("android.permission.READ_PRIVILEGED_PHONE_STATE")
+@RequiresApi(Build.VERSION_CODES.R)
 @Composable
 fun MobileConnectionInfoView(
     modifier: Modifier = Modifier,
@@ -210,9 +221,11 @@ fun MobileConnectionInfoView(
             Text("Mobile Network Details", style = MaterialTheme.typography.titleMedium)
             Spacer(modifier = modifier.height(16.dp))
             info?.let { info ->
-                InfoRow("Signal Strength", info.signalStrength?.level?.toString()?:"")
+                InfoRow("Signal Strength", info.signalStrength?.level?.toString() ?: "")
                 InfoRow("Sim Operator", "${info.simOperatorName} ${info.simOperator}")
                 InfoRow("Network Operator", "${info.networkOperatorName} ${info.networkOperator}")
+                InfoRow("Active Modems", "${info.activeModemCount}")
+                Spacer(modifier = modifier.height(16.dp))
             }
         }
     }
